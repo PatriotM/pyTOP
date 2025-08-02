@@ -6,6 +6,8 @@ from datetime import datetime
 # Configuration
 CONFIG = {
     'groups': ['iND', 'GROUP2', 'GROUP3'],  # Groups to search for
+    'daily_header': 'Daily Upload Stats: TOP5 avg upload {avg_upload} | UP {up_bytes} / DN {dn_bytes} = {total_bytes}',
+    'monthly_header': 'Monthly Upload Stats: TOP5 avg upload {avg_upload} | UP {up_bytes} / DN {dn_bytes} = {total_bytes}',
     'daily_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
     'monthly_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
     'no_activity_daily': '= no uploads/downloads today',
@@ -109,8 +111,13 @@ def print_daily_stats(users):
     top_5_bytes = [user['dayup']['bytes'] for user in sorted_users[:5]]
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
+    # Calculate total upload and download bytes
+    up_bytes = sum(user['dayup']['bytes'] for user in sorted_users)
+    dn_bytes = sum(user['daydn']['bytes'] for user in sorted_users)
+    total_bytes = up_bytes + dn_bytes
+    
     # Print Daily Upload/Download Stats
-    print(f"\nDaily Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
+    print(f"\n{CONFIG['daily_header'].format(avg_upload=format_bytes(avg_upload), up_bytes=format_bytes(up_bytes), dn_bytes=format_bytes(dn_bytes), total_bytes=format_bytes(total_bytes))}")
     for idx, user in enumerate(sorted_users, 1):
         # Use first group if available, else empty string
         group = user['groups'][0] if user['groups'] else ""
@@ -147,8 +154,13 @@ def print_monthly_stats(users):
     top_5_bytes = [user['monthup']['bytes'] for user in sorted_users[:5]]
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
+    # Calculate total upload and download bytes
+    up_bytes = sum(user['monthup']['bytes'] for user in sorted_users)
+    dn_bytes = sum(user['monthdn']['bytes'] for user in sorted_users)
+    total_bytes = up_bytes + dn_bytes
+    
     # Print Monthly Upload/Download Stats
-    print(f"\nMonthly Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
+    print(f"\n{CONFIG['monthly_header'].format(avg_upload=format_bytes(avg_upload), up_bytes=format_bytes(up_bytes), dn_bytes=format_bytes(dn_bytes), total_bytes=format_bytes(total_bytes))}")
     for idx, user in enumerate(sorted_users, 1):
         # Use first group if available, else empty string
         group = user['groups'][0] if user['groups'] else ""
@@ -212,6 +224,9 @@ def main():
     if not ind_users:
         print(f"No users found in groups: {', '.join(CONFIG['groups'])}")
         return
+    
+    print(f"\nFound {len(ind_users)} users in groups: {', '.join(CONFIG['groups'])}")
+    print("=" * 50)
     
     if args.day:
         print_daily_stats(ind_users)
