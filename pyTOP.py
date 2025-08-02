@@ -6,8 +6,8 @@ from datetime import datetime
 # Configuration
 CONFIG = {
     'groups': ['iND', 'GROUP2', 'GROUP3'],  # Groups to search for
-    'daily_format': '{idx}. {username}{group_str} {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
-    'monthly_format': '{idx}. {username}{group_str} {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
+    'daily_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
+    'monthly_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
     'no_activity_daily': '= no uploads/downloads today',
     'no_activity_monthly': '= no uploads/downloads this month',
     'user_dir': '/glftpd/ftp-data/users'  # User files directory
@@ -110,13 +110,13 @@ def print_daily_stats(users):
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
     # Print Daily Upload/Download Stats
-    print(f"\nDaily Upload Stats: TOP avg upload {format_bytes(avg_upload)}")
-    print("Count. User/Group Size")
+    print(f"\nDaily Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
     for idx, user in enumerate(sorted_users, 1):
-        # Show only the first group, if any
-        group_str = f" ({user['groups'][0]})" if user['groups'] else ""
+        # Use first group if available, else empty string
+        group = user['groups'][0] if user['groups'] else ""
         if user['dayup']['bytes'] == 0 and user['daydn']['bytes'] == 0:
-            print(f"{idx}. {user['username']}{group_str} {CONFIG['no_activity_daily']}")
+            group_formatted = f"/\033[1m{group}\033[0m" if group else ""
+            print(f"{idx}. {user['username']}{group_formatted} {CONFIG['no_activity_daily']}")
         else:
             up_size = format_bytes(user['dayup']['bytes'])
             dn_size = format_bytes(user['daydn']['bytes'])
@@ -130,7 +130,7 @@ def print_daily_stats(users):
             print(CONFIG['daily_format'].format(
                 idx=idx,
                 username=user['username'],
-                group_str=group_str,
+                group=group,
                 color_code=color_code,
                 up_size=up_size,
                 dn_size=dn_size,
@@ -148,13 +148,13 @@ def print_monthly_stats(users):
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
     # Print Monthly Upload/Download Stats
-    print(f"\nMonthly Upload Stats: TOP avg upload {format_bytes(avg_upload)}")
-    print("Count. User/Group Size")
+    print(f"\nMonthly Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
     for idx, user in enumerate(sorted_users, 1):
-        # Show only the first group, if any
-        group_str = f" ({user['groups'][0]})" if user['groups'] else ""
+        # Use first group if available, else empty string
+        group = user['groups'][0] if user['groups'] else ""
         if user['monthup']['bytes'] == 0 and user['monthdn']['bytes'] == 0:
-            print(f"{idx}. {user['username']}{group_str} {CONFIG['no_activity_monthly']}")
+            group_formatted = f"/\033[1m{group}\033[0m" if group else ""
+            print(f"{idx}. {user['username']}{group_formatted} {CONFIG['no_activity_monthly']}")
         else:
             up_size = format_bytes(user['monthup']['bytes'])
             dn_size = format_bytes(user['monthdn']['bytes'])
@@ -168,7 +168,7 @@ def print_monthly_stats(users):
             print(CONFIG['monthly_format'].format(
                 idx=idx,
                 username=user['username'],
-                group_str=group_str,
+                group=group,
                 color_code=color_code,
                 up_size=up_size,
                 dn_size=dn_size,
@@ -212,9 +212,6 @@ def main():
     if not ind_users:
         print(f"No users found in groups: {', '.join(CONFIG['groups'])}")
         return
-    
-    print(f"\nFound {len(ind_users)} users in groups: {', '.join(CONFIG['groups'])}")
-    print("=" * 50)
     
     if args.day:
         print_daily_stats(ind_users)
