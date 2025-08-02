@@ -104,7 +104,7 @@ def print_daily_stats(users):
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
     # Print Daily Upload/Download Stats
-    print(f"\nDaily Upload Stats: TOP avg upload {format_bytes(avg_upload)}")
+    print(f"\nDaily Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
     print("Count. User/Group Size")
     for idx, user in enumerate(sorted_users, 1):
         # Show only the first group, if any
@@ -133,7 +133,7 @@ def print_monthly_stats(users):
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
     # Print Monthly Upload/Download Stats
-    print(f"\nMonthly Upload Stats: TOP avg upload {format_bytes(avg_upload)}")
+    print(f"\nMonthly Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
     print("Count. User/Group Size")
     for idx, user in enumerate(sorted_users, 1):
         # Show only the first group, if any
