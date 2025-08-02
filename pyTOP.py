@@ -3,9 +3,15 @@ import re
 import argparse
 from datetime import datetime
 
-# Configuration: Define groups to search for
-CONFIG_GROUPS = ['iND', 'GROUP2', 'GROUP3']  # Add or modify groups here
-USER_DIR = "/glftpd/ftp-data/users"  # User files directory
+# Configuration
+CONFIG = {
+    'groups': ['iND', 'GROUP2', 'GROUP3'],  # Groups to search for
+    'daily_format': '{idx}. {username}{group_str} {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
+    'monthly_format': '{idx}. {username}{group_str} {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
+    'no_activity_daily': '= no uploads/downloads today',
+    'no_activity_monthly': '= no uploads/downloads this month',
+    'user_dir': '/glftpd/ftp-data/users'  # User files directory
+}
 
 def parse_user_file(filepath):
     """Parse a user file and return a dictionary with relevant stats."""
@@ -104,13 +110,13 @@ def print_daily_stats(users):
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
     # Print Daily Upload/Download Stats
-    print(f"\nDaily Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
+    print(f"\nDaily Upload Stats: TOP avg upload {format_bytes(avg_upload)}")
     print("Count. User/Group Size")
     for idx, user in enumerate(sorted_users, 1):
         # Show only the first group, if any
         group_str = f" ({user['groups'][0]})" if user['groups'] else ""
         if user['dayup']['bytes'] == 0 and user['daydn']['bytes'] == 0:
-            print(f"{idx}. {user['username']}{group_str} = no uploads/downloads today")
+            print(f"{idx}. {user['username']}{group_str} {CONFIG['no_activity_daily']}")
         else:
             up_size = format_bytes(user['dayup']['bytes'])
             dn_size = format_bytes(user['daydn']['bytes'])
@@ -121,7 +127,16 @@ def print_daily_stats(users):
             # Color only UP [size] and DN [size] based on UP > DN
             color_code = "\033[32m" if user['dayup']['bytes'] > user['daydn']['bytes'] else "\033[31m"
             reset_code = "\033[0m"
-            print(f"{idx}. {user['username']}{group_str} {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})")
+            print(CONFIG['daily_format'].format(
+                idx=idx,
+                username=user['username'],
+                group_str=group_str,
+                color_code=color_code,
+                up_size=up_size,
+                dn_size=dn_size,
+                ratio_display=ratio_display,
+                reset_code=reset_code
+            ))
 
 def print_monthly_stats(users):
     """Print monthly upload/download statistics for users, sorted by monthup bytes and monthdn bytes."""
@@ -133,13 +148,13 @@ def print_monthly_stats(users):
     avg_upload = sum(top_5_bytes) / 5 if top_5_bytes else 0
     
     # Print Monthly Upload/Download Stats
-    print(f"\nMonthly Upload Stats: TOP5 avg upload {format_bytes(avg_upload)}")
+    print(f"\nMonthly Upload Stats: TOP avg upload {format_bytes(avg_upload)}")
     print("Count. User/Group Size")
     for idx, user in enumerate(sorted_users, 1):
         # Show only the first group, if any
         group_str = f" ({user['groups'][0]})" if user['groups'] else ""
         if user['monthup']['bytes'] == 0 and user['monthdn']['bytes'] == 0:
-            print(f"{idx}. {user['username']}{group_str} = no uploads/downloads this month")
+            print(f"{idx}. {user['username']}{group_str} {CONFIG['no_activity_monthly']}")
         else:
             up_size = format_bytes(user['monthup']['bytes'])
             dn_size = format_bytes(user['monthdn']['bytes'])
@@ -150,7 +165,16 @@ def print_monthly_stats(users):
             # Color only UP [size] and DN [size] based on UP > DN
             color_code = "\033[32m" if user['monthup']['bytes'] > user['monthdn']['bytes'] else "\033[31m"
             reset_code = "\033[0m"
-            print(f"{idx}. {user['username']}{group_str} {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})")
+            print(CONFIG['monthly_format'].format(
+                idx=idx,
+                username=user['username'],
+                group_str=group_str,
+                color_code=color_code,
+                up_size=up_size,
+                dn_size=dn_size,
+                ratio_display=ratio_display,
+                reset_code=reset_code
+            ))
 
 def main():
     """Main function to process user files and display stats based on command-line arguments."""
@@ -171,25 +195,25 @@ def main():
     ind_users = []
     
     # Check if directory exists
-    if not os.path.exists(USER_DIR):
-        print(f"Error: Directory {USER_DIR} does not exist")
+    if not os.path.exists(CONFIG['user_dir']):
+        print(f"Error: Directory {CONFIG['user_dir']} does not exist")
         return
     
     # Process each file in the user directory
-    for filename in os.listdir(USER_DIR):
-        filepath = os.path.join(USER_DIR, filename)
+    for filename in os.listdir(CONFIG['user_dir']):
+        filepath = os.path.join(CONFIG['user_dir'], filename)
         if os.path.isfile(filepath):
             user_data = parse_user_file(filepath)
             # Check if user in any of the configured groups
-            if any(group in user_data['groups'] for group in CONFIG_GROUPS):
+            if any(group in user_data['groups'] for group in CONFIG['groups']):
                 ind_users.append(user_data)
     
     # Print results
     if not ind_users:
-        print(f"No users found in groups: {', '.join(CONFIG_GROUPS)}")
+        print(f"No users found in groups: {', '.join(CONFIG['groups'])}")
         return
     
-    print(f"\nFound {len(ind_users)} users in groups: {', '.join(CONFIG_GROUPS)}")
+    print(f"\nFound {len(ind_users)} users in groups: {', '.join(CONFIG['groups'])}")
     print("=" * 50)
     
     if args.day:
