@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import re
 import argparse
@@ -6,10 +8,10 @@ from datetime import datetime
 # Configuration
 CONFIG = {
     'groups': ['iND', 'GROUP2', 'GROUP3'],  # Groups to search for
-    'daily_header': 'Daily Upload Stats: TOP5 avg upload {avg_upload} | UP {up_bytes} / DN {dn_bytes} = {total_bytes}',
-    'monthly_header': 'Monthly Upload Stats: TOP5 avg upload {avg_upload} | UP {up_bytes} / DN {dn_bytes} = {total_bytes}',
-    'daily_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
-    'monthly_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}UP {up_size}{reset_code} / {color_code}DN {dn_size}{reset_code} (Ratio: {ratio_display})',
+    'daily_header': 'Daily Upload Stats: TOP5 avg upload {avg_upload} | ↑{up_bytes}/↓{dn_bytes}/~{total_bytes}',
+    'monthly_header': 'Monthly Upload Stats: TOP5 avg upload {avg_upload} | ↑{up_bytes}/↓{dn_bytes}/~{total_bytes}',
+    'daily_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}↑{up_size}{reset_code}/{color_code}↓{dn_size}{reset_code} (Ratio: {ratio_display})',
+    'monthly_format': '{idx}. {username}/\033[1m{group}\033[0m {color_code}↑{up_size}{reset_code}/{color_code}↓{dn_size}{reset_code} (Ratio: {ratio_display})',
     'no_activity_daily': '= no uploads/downloads today',
     'no_activity_monthly': '= no uploads/downloads this month',
     'user_dir': '/glftpd/ftp-data/users'  # User files directory
@@ -88,7 +90,7 @@ def format_bytes(size):
         size /= 1024
         unit_index += 1
     
-    return f"{size:.2f} {units[unit_index]}"
+    return f"{size:.2f}{units[unit_index]}"
 
 def format_time(seconds):
     """Convert seconds to human-readable time format."""
@@ -117,7 +119,7 @@ def print_daily_stats(users):
     total_bytes = up_bytes + dn_bytes
     
     # Print Daily Upload/Download Stats
-    print(f"\n{CONFIG['daily_header'].format(avg_upload=format_bytes(avg_upload), up_bytes=format_bytes(up_bytes), dn_bytes=format_bytes(dn_bytes), total_bytes=format_bytes(total_bytes))}")
+    print(f"{CONFIG['daily_header'].format(avg_upload=format_bytes(avg_upload), up_bytes=format_bytes(up_bytes), dn_bytes=format_bytes(dn_bytes), total_bytes=format_bytes(total_bytes))}")
     for idx, user in enumerate(sorted_users, 1):
         # Use first group if available, else empty string
         group = user['groups'][0] if user['groups'] else ""
@@ -160,7 +162,7 @@ def print_monthly_stats(users):
     total_bytes = up_bytes + dn_bytes
     
     # Print Monthly Upload/Download Stats
-    print(f"\n{CONFIG['monthly_header'].format(avg_upload=format_bytes(avg_upload), up_bytes=format_bytes(up_bytes), dn_bytes=format_bytes(dn_bytes), total_bytes=format_bytes(total_bytes))}")
+    print(f"{CONFIG['monthly_header'].format(avg_upload=format_bytes(avg_upload), up_bytes=format_bytes(up_bytes), dn_bytes=format_bytes(dn_bytes), total_bytes=format_bytes(total_bytes))}")
     for idx, user in enumerate(sorted_users, 1):
         # Use first group if available, else empty string
         group = user['groups'][0] if user['groups'] else ""
@@ -224,9 +226,6 @@ def main():
     if not ind_users:
         print(f"No users found in groups: {', '.join(CONFIG['groups'])}")
         return
-    
-    print(f"\nFound {len(ind_users)} users in groups: {', '.join(CONFIG['groups'])}")
-    print("=" * 50)
     
     if args.day:
         print_daily_stats(ind_users)
